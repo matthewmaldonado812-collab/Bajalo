@@ -1,0 +1,25 @@
+name: Compilar APK
+on: [push, workflow_dispatch]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: unzip -q Bajalo-proyecto-android.zip
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+        working-directory: Bajalo
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Bajalo-APK
+          path: Bajalo/app/build/outputs/apk/debug/*.apk
+      - run: |
+          gh release delete apk -y --cleanup-tag || true
+          gh release create apk Bajalo/app/build/outputs/apk/debug/app-debug.apk --title "Bajalo APK" --notes "APK de prueba"
+        env:
+          GH_TOKEN: ${{ github.token }}
